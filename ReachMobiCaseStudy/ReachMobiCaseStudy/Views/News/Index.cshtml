@@ -1,0 +1,44 @@
+@model ReachMobiCaseStudy.Models.NewsSearchViewModel
+@{
+    ViewData["Title"] = "News Search";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h1 class="mb-3">Search News Articles</h1>
+                    <p class="text-muted">
+                        Search by keyword, date, or both.
+                    </p>
+
+                    <form asp-action="Search" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Keyword" class="form-label"></label>
+                            <input asp-for="Keyword" class="form-control" placeholder="Try: technology, sports, elections" />
+                            <span asp-validation-for="Keyword" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Date" class="form-label">Date</label>
+                            <input asp-for="Date" class="form-control" type="date" />
+                            <span asp-validation-for="Date" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a asp-action="Stats" class="btn btn-outline-secondary">View Session Stats</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

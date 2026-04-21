@@ -1,0 +1,49 @@
+@model ReachMobiCaseStudy.Models.ArticleClickStatsViewModel
+@{
+    ViewData["Title"] = "Session Article Stats";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+        <div>
+            <h1 class="mb-1">Session Article Stats</h1>
+            <p class="text-muted mb-0">Total article reads this session: <strong>@Model.TotalClicks</strong></p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary">Back to Search</a>
+    </div>
+
+    @if (!Model.Articles.Any())
+    {
+        <div class="alert alert-info">
+            No article clicks have been tracked in this session yet.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Article</th>
+                            <th>URL</th>
+                            <th class="text-end">Clicks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var article in Model.Articles)
+                        {
+                            <tr>
+                                <td>@article.Title</td>
+                                <td>
+                                    <a href="@article.Url" target="_blank" rel="noopener noreferrer">Open Article</a>
+                                </td>
+                                <td class="text-end">@article.ClickCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

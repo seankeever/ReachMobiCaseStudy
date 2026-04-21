@@ -23,32 +23,58 @@ namespace ReachMobiCaseStudy.Controllers
             return View(new NewsSearchViewModel());
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Search(NewsSearchViewModel model)
+        [HttpGet]
+        public async Task<IActionResult> Search(string? keyword, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 20)
         {
-            if (string.IsNullOrWhiteSpace(model.Keyword))
+            if (string.IsNullOrWhiteSpace(keyword))
             {
+                var model = new NewsSearchViewModel
+                {
+                    Keyword = keyword,
+                    FromDate = fromDate,
+                    ToDate = toDate
+                };
+
                 ModelState.AddModelError(string.Empty, "Please enter a keyword. You can optionally add a date range.");
                 return View("Index", model);
             }
 
-            if (model.FromDate.HasValue && model.ToDate.HasValue && model.FromDate > model.ToDate)
+            if (fromDate.HasValue && toDate.HasValue && fromDate > toDate)
             {
+                var model = new NewsSearchViewModel
+                {
+                    Keyword = keyword,
+                    FromDate = fromDate,
+                    ToDate = toDate
+                };
+
                 ModelState.AddModelError(string.Empty, "From Date cannot be after To Date.");
                 return View("Index", model);
             }
 
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize switch
+            {
+                10 => 10,
+                20 => 20,
+                50 => 50,
+                _ => 20
+            };
+
             try
             {
-                var resultsViewModel = await _newsApiService.SearchAsync(
-                    model.Keyword,
-                    model.FromDate,
-                    model.ToDate);
-
+                var resultsViewModel = await _newsApiService.SearchAsync(keyword, fromDate, toDate, page, pageSize);
                 return View("Results", resultsViewModel);
             }
             catch (Exception ex)
             {
+                var model = new NewsSearchViewModel
+                {
+                    Keyword = keyword,
+                    FromDate = fromDate,
+                    ToDate = toDate
+                };
+
                 if (ex.Message.Contains("parametersMissing", StringComparison.OrdinalIgnoreCase))
                 {
                     model.ErrorMessage = "Please enter a keyword. The NewsAPI everything endpoint does not support a blank search.";
@@ -72,6 +98,19 @@ namespace ReachMobiCaseStudy.Controllers
 
                 return View("Index", model);
             }
+        }
+
+        [HttpPost]
+        public IActionResult Search(NewsSearchViewModel model)
+        {
+            return RedirectToAction("Search", new
+            {
+                keyword = model.Keyword,
+                fromDate = model.FromDate?.ToString("yyyy-MM-dd"),
+                toDate = model.ToDate?.ToString("yyyy-MM-dd"),
+                page = 1,
+                pageSize = 20
+            });
         }
 
         [HttpGet]

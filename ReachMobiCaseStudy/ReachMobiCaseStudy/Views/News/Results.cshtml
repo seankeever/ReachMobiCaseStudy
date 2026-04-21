@@ -39,6 +39,108 @@
         </div>
     </div>
 
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+        <div class="text-muted">
+            Showing page @Model.Page of @Model.TotalPages
+            (@Model.TotalResults total results)
+        </div>
+
+        <form asp-action="Search" asp-controller="News" method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="keyword" value="@Model.Keyword" />
+            <input type="hidden" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="page" value="1" />
+
+            <label for="pageSize" class="form-label mb-0">Page Size</label>
+            <select id="pageSize" name="pageSize" class="form-select" style="width:auto;" onchange="this.form.submit()">
+                <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            </select>
+        </form>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Search result pages" class="mt-4">
+            <ul class="pagination flex-wrap">
+
+                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link"
+                           asp-action="Search"
+                           asp-controller="News"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-page="1"
+                           asp-route-pageSize="@Model.PageSize">
+                        First
+                    </a>
+                </li>
+
+                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link"
+                           asp-action="Search"
+                           asp-controller="News"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-page="@(Model.Page - 1)"
+                           asp-route-pageSize="@Model.PageSize">
+                        Previous
+                    </a>
+                </li>
+
+                @{
+                    var startPage = Math.Max(1, Model.Page - 2);
+                    var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                        <a class="page-link"
+                               asp-action="Search"
+                               asp-controller="News"
+                               asp-route-keyword="@Model.Keyword"
+                               asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                               asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                               asp-route-page="@i"
+                               asp-route-pageSize="@Model.PageSize">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                           asp-action="Search"
+                           asp-controller="News"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-page="@(Model.Page + 1)"
+                           asp-route-pageSize="@Model.PageSize">
+                        Next
+                    </a>
+                </li>
+
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                           asp-action="Search"
+                           asp-controller="News"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-page="@Model.TotalPages"
+                           asp-route-pageSize="@Model.PageSize">
+                        Last
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+
     @if (!Model.Articles.Any())
     {
         <div class="alert alert-info">

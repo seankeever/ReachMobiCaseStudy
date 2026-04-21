@@ -15,7 +15,7 @@ public class NewsApiService : INewsApiService
         _configuration = configuration;
     }
 
-    public async Task<List<NewsArticleViewModel>> SearchAsync(string? keyword, DateTime? date)
+    public async Task<List<NewsArticleViewModel>> SearchAsync(string? keyword, DateTime? fromDate, DateTime? toDate)
     {
         var apiKey = _configuration["NewsApi:ApiKey"];
         var baseUrl = _configuration["NewsApi:BaseUrl"];
@@ -39,13 +39,14 @@ public class NewsApiService : INewsApiService
             ["apiKey"] = apiKey
         };
 
-        if (date.HasValue)
+        if (fromDate.HasValue)
         {
-            var from = date.Value.Date;
-            var to = date.Value.Date.AddDays(1).AddSeconds(-1);
+            queryParams["from"] = fromDate.Value.Date.ToString("yyyy-MM-ddTHH:mm:ss");
+        }
 
-            queryParams["from"] = from.ToString("yyyy-MM-ddTHH:mm:ss");
-            queryParams["to"] = to.ToString("yyyy-MM-ddTHH:mm:ss");
+        if (toDate.HasValue)
+        {
+            queryParams["to"] = toDate.Value.Date.AddDays(1).AddSeconds(-1).ToString("yyyy-MM-ddTHH:mm:ss");
         }
 
         var requestUrl = QueryHelpers.AddQueryString(baseUrl, queryParams!);

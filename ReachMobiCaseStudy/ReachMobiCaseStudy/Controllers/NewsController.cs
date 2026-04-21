@@ -2,72 +2,102 @@ using Microsoft.AspNetCore.Mvc;
 using ReachMobiCaseStudy.Models;
 using ReachMobiCaseStudy.Services;
 
-namespace ReachMobiCaseStudy.Controllers;
-
-public class NewsController : Controller
+namespace ReachMobiCaseStudy.Controllers
 {
-    private readonly INewsApiService _newsApiService;
-    private readonly ISessionArticleTracker _sessionArticleTracker;
-
-    public NewsController(INewsApiService newsApiService, ISessionArticleTracker sessionArticleTracker)
+    public class NewsController : Controller
     {
-        _newsApiService = newsApiService;
-        _sessionArticleTracker = sessionArticleTracker;
-    }
+        private readonly INewsApiService _newsApiService;
+        private readonly ISessionArticleTracker _sessionArticleTracker;
 
-    [HttpGet]
-    public IActionResult Index()
-    {
-        return View(new NewsSearchViewModel());
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Search(NewsSearchViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Keyword) && !model.Date.HasValue)
+        public NewsController(
+            INewsApiService newsApiService,
+            ISessionArticleTracker sessionArticleTracker)
         {
-            ModelState.AddModelError(string.Empty, "Enter a keyword, a date, or both.");
+            _newsApiService = newsApiService;
+            _sessionArticleTracker = sessionArticleTracker;
         }
 
-        if (model.Date.HasValue && model.Date.Value.Date > DateTime.UtcNow.Date)
+        [HttpGet]
+        public IActionResult Index()
         {
-            ModelState.AddModelError(nameof(model.Date), "Date cannot be in the future.");
+            return View(new NewsSearchViewModel());
         }
 
-        if (!ModelState.IsValid)
+        [HttpPost]
+        public async Task<IActionResult> Search(NewsSearchViewModel model)
         {
-            return View("Index", model);
+            if (string.IsNullOrWhiteSpace(model.Keyword) && !model.FromDate.HasValue && !model.ToDate.HasValue)
+                if (string.IsNullOrWhiteSpace(model.Keyword))
+                {
+                    ModelState.AddModelError(string.Empty, "Please enter a keyword. You can optionally add a date range.");
+                    return View("Index", model);
+                }
+
+            if (model.FromDate.HasValue && model.ToDate.HasValue && model.FromDate > model.ToDate)
+            {
+                ModelState.AddModelError(string.Empty, "From Date cannot be after To Date.");
+                return View("Index", model);
+            }
+
+            try
+            {
+                var articles = await _newsApiService.SearchAsync(model.Keyword, model.FromDate, model.ToDate);
+
+                var resultsViewModel = new NewsSearchResultsViewModel
+                {
+                    Keyword = model.Keyword,
+                    FromDate = model.FromDate,
+                    ToDate = model.ToDate,
+                    Articles = articles
+                };
+
+                return View("Results", resultsViewModel);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("parametersMissing", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.ErrorMessage = "Please enter a keyword. The NewsAPI everything endpoint does not support a blank search.";
+                }
+                else if (ex.Message.Contains("apiKeyInvalid", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.ErrorMessage = "Your NewsAPI key appears to be invalid. Please check your configuration.";
+                }
+                else if (ex.Message.Contains("apiKeyMissing", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.ErrorMessage = "Your NewsAPI key is missing from configuration.";
+                }
+                else if (ex.Message.Contains("rateLimited", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.ErrorMessage = "The News API rate limit was reached. Please wait and try again.";
+                }
+                else
+                {
+                    model.ErrorMessage = "Unable to retrieve news articles right now. Please try again later.";
+                }
+
+                return View("Index", model);
+            }
         }
 
-        var articles = await _newsApiService.SearchAsync(model.Keyword, model.Date);
-
-        var results = new NewsSearchResultsViewModel
+        [HttpGet]
+        public IActionResult Read(string articleUrl, string articleTitle)
         {
-            Keyword = model.Keyword,
-            Date = model.Date,
-            Articles = articles
-        };
+            if (string.IsNullOrWhiteSpace(articleUrl))
+            {
+                return RedirectToAction("Index");
+            }
 
-        return View("Results", results);
-    }
+            _sessionArticleTracker.TrackClick(HttpContext.Session, articleTitle, articleUrl);
 
-    [HttpGet]
-    public IActionResult Read(string url, string title)
-    {
-        if (string.IsNullOrWhiteSpace(url) || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
-        {
-            return BadRequest("Invalid article URL.");
+            return Redirect(articleUrl);
         }
 
-        _sessionArticleTracker.TrackClick(HttpContext.Session, url, title);
-        return Redirect(url);
-    }
-
-    [HttpGet]
-    public IActionResult Stats()
-    {
-        var stats = _sessionArticleTracker.GetStats(HttpContext.Session);
-        return View(stats);
+        [HttpGet]
+        public IActionResult Stats()
+        {
+            var stats = _sessionArticleTracker.GetStats(HttpContext.Session);
+            return View(stats);
+        }
     }
 }

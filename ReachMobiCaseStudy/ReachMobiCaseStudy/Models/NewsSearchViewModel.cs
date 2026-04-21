@@ -1,12 +1,21 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace ReachMobiCaseStudy.Models;
-
-public class NewsSearchViewModel
+namespace ReachMobiCaseStudy.Models
 {
-    [StringLength(100, ErrorMessage = "Keyword cannot exceed 100 characters.")]
-    public string? Keyword { get; set; }
+    public class NewsSearchViewModel
+    {
+        [Display(Name = "Keyword")]
+        public string? Keyword { get; set; }
 
-    [DataType(DataType.Date)]
-    public DateTime? Date { get; set; }
+        [DataType(DataType.Date)]
+        [Display(Name = "From Date")]
+        public DateTime? FromDate { get; set; }
+
+        [DataType(DataType.Date)]
+        [Display(Name = "To Date")]
+        public DateTime? ToDate { get; set; }
+
+        public string? ErrorMessage { get; set; }
+    }
 }

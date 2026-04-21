@@ -12,9 +12,24 @@
                 {
                     <span><strong>Keyword:</strong> @Model.Keyword</span>
                 }
-                @if (Model.Date.HasValue)
+
+                @if (Model.FromDate.HasValue || Model.ToDate.HasValue)
                 {
-                    <span class="ms-md-3 d-inline-block"><strong>Date:</strong> @Model.Date.Value.ToString("MMMM d, yyyy")</span>
+                    <span class="ms-md-3 d-inline-block">
+                        <strong>Date Range:</strong>
+                        @if (Model.FromDate.HasValue && Model.ToDate.HasValue)
+                        {
+                            @($"{Model.FromDate.Value:MMMM d, yyyy} to {Model.ToDate.Value:MMMM d, yyyy}")
+                        }
+                        else if (Model.FromDate.HasValue)
+                        {
+                            @($"From {Model.FromDate.Value:MMMM d, yyyy}")
+                        }
+                        else if (Model.ToDate.HasValue)
+                        {
+                            @($"Up to {Model.ToDate.Value:MMMM d, yyyy}")
+                        }
+                    </span>
                 }
             </div>
         </div>

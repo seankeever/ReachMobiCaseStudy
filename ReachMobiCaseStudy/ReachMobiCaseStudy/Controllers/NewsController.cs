@@ -26,12 +26,11 @@ namespace ReachMobiCaseStudy.Controllers
         [HttpPost]
         public async Task<IActionResult> Search(NewsSearchViewModel model)
         {
-            if (string.IsNullOrWhiteSpace(model.Keyword) && !model.FromDate.HasValue && !model.ToDate.HasValue)
-                if (string.IsNullOrWhiteSpace(model.Keyword))
-                {
-                    ModelState.AddModelError(string.Empty, "Please enter a keyword. You can optionally add a date range.");
-                    return View("Index", model);
-                }
+            if (string.IsNullOrWhiteSpace(model.Keyword))
+            {
+                ModelState.AddModelError(string.Empty, "Please enter a keyword. You can optionally add a date range.");
+                return View("Index", model);
+            }
 
             if (model.FromDate.HasValue && model.ToDate.HasValue && model.FromDate > model.ToDate)
             {
@@ -41,15 +40,10 @@ namespace ReachMobiCaseStudy.Controllers
 
             try
             {
-                var articles = await _newsApiService.SearchAsync(model.Keyword, model.FromDate, model.ToDate);
-
-                var resultsViewModel = new NewsSearchResultsViewModel
-                {
-                    Keyword = model.Keyword,
-                    FromDate = model.FromDate,
-                    ToDate = model.ToDate,
-                    Articles = articles
-                };
+                var resultsViewModel = await _newsApiService.SearchAsync(
+                    model.Keyword,
+                    model.FromDate,
+                    model.ToDate);
 
                 return View("Results", resultsViewModel);
             }

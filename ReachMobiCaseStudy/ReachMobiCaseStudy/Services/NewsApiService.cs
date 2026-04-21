@@ -15,86 +15,68 @@ public class NewsApiService : INewsApiService
         _configuration = configuration;
     }
 
-    public async Task<List<NewsArticleViewModel>> SearchAsync(string? keyword, DateTime? fromDate, DateTime? toDate)
+    public async Task<NewsSearchResultsViewModel> SearchAsync(string? keyword, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 20)
     {
         var apiKey = _configuration["NewsApi:ApiKey"];
         var baseUrl = _configuration["NewsApi:BaseUrl"];
 
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException("NewsApi:ApiKey is missing from configuration.");
-        }
-
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            throw new InvalidOperationException("NewsApi:BaseUrl is missing from configuration.");
-        }
-
         var queryParams = new Dictionary<string, string?>
         {
-            ["q"] = string.IsNullOrWhiteSpace(keyword) ? null : keyword,
+            ["q"] = keyword,
             ["language"] = "en",
             ["sortBy"] = "publishedAt",
-            ["pageSize"] = "20",
+            ["page"] = page.ToString(),
+            ["pageSize"] = pageSize.ToString(),
             ["apiKey"] = apiKey
         };
 
         if (fromDate.HasValue)
         {
-            queryParams["from"] = fromDate.Value.Date.ToString("yyyy-MM-ddTHH:mm:ss");
+            queryParams["from"] = fromDate.Value.ToString("yyyy-MM-ddTHH:mm:ss");
         }
 
         if (toDate.HasValue)
         {
-            queryParams["to"] = toDate.Value.Date.AddDays(1).AddSeconds(-1).ToString("yyyy-MM-ddTHH:mm:ss");
+            queryParams["to"] = toDate.Value.AddDays(1).AddSeconds(-1)
+                .ToString("yyyy-MM-ddTHH:mm:ss");
         }
 
-        var requestUrl = QueryHelpers.AddQueryString(baseUrl, queryParams!);
-        using var response = await _httpClient.GetAsync(requestUrl);
+        var requestUrl = QueryHelpers.AddQueryString(baseUrl, queryParams);
+
+        var response = await _httpClient.GetAsync(requestUrl);
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            throw new ApplicationException($"News API request failed. Status: {(int)response.StatusCode}. Details: {errorBody}");
+            var error = await response.Content.ReadAsStringAsync();
+            throw new ApplicationException(error);
         }
 
-        await using var responseStream = await response.Content.ReadAsStreamAsync();
-        var apiResponse = await JsonSerializer.DeserializeAsync<NewsApiResponse>(responseStream,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var json = await response.Content.ReadAsStringAsync();
 
-        return apiResponse?.Articles?
-            .Where(a => !string.IsNullOrWhiteSpace(a.Url) && !string.IsNullOrWhiteSpace(a.Title))
-            .Select(a => new NewsArticleViewModel
-            {
-                Title = a.Title ?? "Untitled",
-                Description = a.Description,
-                Url = a.Url ?? string.Empty,
-                UrlToImage = a.UrlToImage,
-                SourceName = a.Source?.Name,
-                PublishedAt = a.PublishedAt,
-                Author = a.Author
-            })
-            .ToList() ?? new List<NewsArticleViewModel>();
-    }
+        var apiResponse = JsonSerializer.Deserialize<NewsApiResponse>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
 
-    private class NewsApiResponse
-    {
-        public List<NewsApiArticle>? Articles { get; set; }
-    }
+        var mappedArticles = apiResponse?.Articles?.Select(a => new NewsArticleViewModel
+        {
+            Title = a.Title ?? "",
+            Description = a.Description,
+            Url = a.Url ?? "",
+            UrlToImage = a.UrlToImage,
+            SourceName = a.Source?.Name,
+            PublishedAt = a.PublishedAt
+        }).ToList() ?? new List<NewsArticleViewModel>();
 
-    private class NewsApiArticle
-    {
-        public NewsApiSource? Source { get; set; }
-        public string? Author { get; set; }
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public string? Url { get; set; }
-        public string? UrlToImage { get; set; }
-        public DateTime? PublishedAt { get; set; }
-    }
-
-    private class NewsApiSource
-    {
-        public string? Name { get; set; }
+        return new NewsSearchResultsViewModel
+        {
+            Keyword = keyword,
+            FromDate = fromDate,
+            ToDate = toDate,
+            Articles = mappedArticles,
+            Page = page,
+            PageSize = pageSize,
+            TotalResults = apiResponse == null ? 0 : apiResponse.TotalResults
+        };
     }
 }

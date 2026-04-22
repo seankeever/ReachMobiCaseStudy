@@ -1,210 +1,211 @@
 @model ReachMobiCaseStudy.Models.NewsSearchResultsViewModel
 @{
-    ViewData["Title"] = "Search Results";
+	ViewData["Title"] = "Search Results";
 }
 
 <div class="container py-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-        <div>
-            <h1 class="mb-1">Search Results</h1>
-            <div class="text-muted">
-                @if (!string.IsNullOrWhiteSpace(Model.Keyword))
-                {
-                    <span><strong>Keyword:</strong> @Model.Keyword</span>
-                }
+	<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+		<div>
+			<h1 class="mb-1">Search Results</h1>
+			<div class="text-muted">
+				@if (!string.IsNullOrWhiteSpace(Model.Keyword))
+				{
+					<span><strong>Keyword:</strong> @Model.Keyword</span>
+				}
 
-                @if (Model.FromDate.HasValue || Model.ToDate.HasValue)
-                {
-                    <span class="ms-md-3 d-inline-block">
-                        <strong>Date Range:</strong>
-                        @if (Model.FromDate.HasValue && Model.ToDate.HasValue)
-                        {
-                            @($"{Model.FromDate.Value:MMMM d, yyyy} to {Model.ToDate.Value:MMMM d, yyyy}")
-                        }
-                        else if (Model.FromDate.HasValue)
-                        {
-                            @($"From {Model.FromDate.Value:MMMM d, yyyy}")
-                        }
-                        else if (Model.ToDate.HasValue)
-                        {
-                            @($"Up to {Model.ToDate.Value:MMMM d, yyyy}")
-                        }
-                    </span>
-                }
-            </div>
-        </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Index" class="btn btn-outline-primary">New Search</a>
-            <a asp-action="Stats" class="btn btn-outline-secondary">Session Stats</a>
-        </div>
-    </div>
+				@if (Model.FromDate.HasValue || Model.ToDate.HasValue)
+				{
+					<span class="ms-md-3 d-inline-block">
+						<strong>Date Range:</strong>
+						@if (Model.FromDate.HasValue && Model.ToDate.HasValue)
+						{
+							@($"{Model.FromDate.Value:MMMM d, yyyy} to {Model.ToDate.Value:MMMM d, yyyy}")
+						}
+						else if (Model.FromDate.HasValue)
+						{
+							@($"From {Model.FromDate.Value:MMMM d, yyyy}")
+						}
+						else if (Model.ToDate.HasValue)
+						{
+							@($"Up to {Model.ToDate.Value:MMMM d, yyyy}")
+						}
+					</span>
+				}
+			</div>
+		</div>
+		<div class="d-flex gap-2">
+			<a asp-action="Index" class="btn btn-outline-primary">New Search</a>
+			<a asp-action="Stats" class="btn btn-outline-secondary">Session Stats</a>
+		</div>
+	</div>
 
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
-        <div class="text-muted">
-            Showing page @Model.Page of @Model.TotalPages
-            (@Model.TotalResults total results)
-        </div>
+	<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+		<div class="text-muted">
+			Showing page @Model.Page of @Model.TotalPages
+			(@Model.TotalResults total results)
+		</div>
 
-        <form asp-action="Search" asp-controller="News" method="get" class="d-flex align-items-center gap-2">
-            <input type="hidden" name="keyword" value="@Model.Keyword" />
-            <input type="hidden" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
-            <input type="hidden" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
-            <input type="hidden" name="page" value="1" />
+		<form asp-action="Search" asp-controller="News" method="get" class="d-flex align-items-center gap-2">
+			<input type="hidden" name="keyword" value="@Model.Keyword" />
+			<input type="hidden" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+			<input type="hidden" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+			<input type="hidden" name="page" value="1" />
 
-            <label for="pageSize" class="form-label mb-0">Page Size</label>
-            <select id="pageSize" name="pageSize" class="form-select" style="width:auto;" onchange="this.form.submit()">
-                <option value="10" selected="@(Model.PageSize == 10)">10</option>
-                <option value="20" selected="@(Model.PageSize == 20)">20</option>
-                <option value="50" selected="@(Model.PageSize == 50)">50</option>
-            </select>
-        </form>
-    </div>
+			<label for="pageSize" class="form-label mb-0">Page Size</label>
+			<select id="pageSize" name="pageSize" class="form-select" style="width:auto;" onchange="this.form.submit()">
+				<option value="10" selected="@(Model.PageSize == 10)">10</option>
+				<option value="20" selected="@(Model.PageSize == 20)">20</option>
+				<option value="50" selected="@(Model.PageSize == 50)">50</option>
+			</select>
+		</form>
+	</div>
 
-    @if (Model.TotalPages > 1)
-    {
-        <nav aria-label="Search result pages" class="mt-4">
-            <ul class="pagination flex-wrap">
+	@if (Model.TotalPages > 1)
+	{
+		<nav aria-label="Search result pages" class="mt-4">
+			<ul class="pagination flex-wrap">
 
-                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                    <a class="page-link"
-                           asp-action="Search"
-                           asp-controller="News"
-                           asp-route-keyword="@Model.Keyword"
-                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-page="1"
-                           asp-route-pageSize="@Model.PageSize">
-                        First
-                    </a>
-                </li>
+				<li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+					<a class="page-link"
+						   asp-action="Search"
+						   asp-controller="News"
+						   asp-route-keyword="@Model.Keyword"
+						   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-page="1"
+						   asp-route-pageSize="@Model.PageSize">
+						First
+					</a>
+				</li>
 
-                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                    <a class="page-link"
-                           asp-action="Search"
-                           asp-controller="News"
-                           asp-route-keyword="@Model.Keyword"
-                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-page="@(Model.Page - 1)"
-                           asp-route-pageSize="@Model.PageSize">
-                        Previous
-                    </a>
-                </li>
+				<li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+					<a class="page-link"
+						   asp-action="Search"
+						   asp-controller="News"
+						   asp-route-keyword="@Model.Keyword"
+						   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-page="@(Model.Page - 1)"
+						   asp-route-pageSize="@Model.PageSize">
+						Previous
+					</a>
+				</li>
 
-                @{
-                    var startPage = Math.Max(1, Model.Page - 2);
-                    var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
-                }
+				@{
+					var startPage = Math.Max(1, Model.Page - 2);
+					var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+				}
 
-                @for (int i = startPage; i <= endPage; i++)
-                {
-                    <li class="page-item @(i == Model.Page ? "active" : "")">
-                        <a class="page-link"
-                               asp-action="Search"
-                               asp-controller="News"
-                               asp-route-keyword="@Model.Keyword"
-                               asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
-                               asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
-                               asp-route-page="@i"
-                               asp-route-pageSize="@Model.PageSize">
-                            @i
-                        </a>
-                    </li>
-                }
+				@for (int i = startPage; i <= endPage; i++)
+				{
+					<li class="page-item @(i == Model.Page ? "active" : "")">
+						<a class="page-link"
+							   asp-action="Search"
+							   asp-controller="News"
+							   asp-route-keyword="@Model.Keyword"
+							   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+							   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+							   asp-route-page="@i"
+							   asp-route-pageSize="@Model.PageSize">
+							@i
+						</a>
+					</li>
+				}
 
-                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-                    <a class="page-link"
-                           asp-action="Search"
-                           asp-controller="News"
-                           asp-route-keyword="@Model.Keyword"
-                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-page="@(Model.Page + 1)"
-                           asp-route-pageSize="@Model.PageSize">
-                        Next
-                    </a>
-                </li>
+				<li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+					<a class="page-link"
+						   asp-action="Search"
+						   asp-controller="News"
+						   asp-route-keyword="@Model.Keyword"
+						   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-page="@(Model.Page + 1)"
+						   asp-route-pageSize="@Model.PageSize">
+						Next
+					</a>
+				</li>
 
-                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-                    <a class="page-link"
-                           asp-action="Search"
-                           asp-controller="News"
-                           asp-route-keyword="@Model.Keyword"
-                           asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-page="@Model.TotalPages"
-                           asp-route-pageSize="@Model.PageSize">
-                        Last
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    }
+				<li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+					<a class="page-link"
+						   asp-action="Search"
+						   asp-controller="News"
+						   asp-route-keyword="@Model.Keyword"
+						   asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+						   asp-route-page="@Model.TotalPages"
+						   asp-route-pageSize="@Model.PageSize">
+						Last
+					</a>
+				</li>
+			</ul>
+		</nav>
+	}
 
-    @if (!Model.Articles.Any())
-    {
-        <div class="alert alert-info">
-            No articles were found for your search.
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            @foreach (var article in Model.Articles)
-            {
-                <div class="col-12">
-                    <div class="card h-100 shadow-sm border-0 news-card">
-                        <div class="row g-0">
-                            <div class="col-12 col-md-4">
-                                @if (!string.IsNullOrWhiteSpace(article.UrlToImage))
-                                {
-                                    <img src="@article.UrlToImage" class="img-fluid rounded-start news-image" alt="Article image for @article.Title" />
-                                }
-                                else
-                                {
-                                    <div class="news-image-placeholder d-flex align-items-center justify-content-center rounded-start h-100">
-                                        <span class="text-muted">No image</span>
-                                    </div>
-                                }
-                            </div>
-                            <div class="col-12 col-md-8">
-                                <div class="card-body d-flex flex-column h-100">
-                                    <h2 class="h4">@article.Title</h2>
+	@if (!Model.Articles.Any())
+	{
+		<div class="alert alert-info">
+			No articles were found for your search.
+		</div>
+	}
+	else
+	{
+		<div class="row g-4">
+			@foreach (var article in Model.Articles)
+			{
+				<div class="col-12">
+					<div class="card h-100 shadow-sm border-0 news-card">
+						<div class="row g-0">
+							<div class="col-12 col-md-4">
+								@if (!string.IsNullOrWhiteSpace(article.UrlToImage))
+								{
+									<img src="@article.UrlToImage" class="img-fluid rounded-start news-image" alt="Article image for @article.Title" />
+								}
+								else
+								{
+									<div class="news-image-placeholder d-flex align-items-center justify-content-center rounded-start h-100">
+										<span class="text-muted">No image</span>
+									</div>
+								}
+							</div>
+							<div class="col-12 col-md-8">
+								<div class="card-body d-flex flex-column h-100">
+									<h2 class="h4">@article.Title</h2>
 
-                                    <div class="mb-2 text-muted small">
-                                        @if (!string.IsNullOrWhiteSpace(article.SourceName))
-                                        {
-                                            <span><strong>Source:</strong> @article.SourceName</span>
-                                        }
-                                        @if (article.PublishedAt.HasValue)
-                                        {
-                                            <span class="ms-md-3 d-inline-block"><strong>Published:</strong> @article.PublishedAt.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
-                                        }
-                                    </div>
+									<div class="mb-2 text-muted small">
+										@if (!string.IsNullOrWhiteSpace(article.SourceName))
+										{
+											<span><strong>Source:</strong> @article.SourceName</span>
+										}
+										@if (article.PublishedAt.HasValue)
+										{
+											<span class="ms-md-3 d-inline-block"><strong>Published:</strong> @article.PublishedAt.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+										}
+									</div>
 
-                                    @if (!string.IsNullOrWhiteSpace(article.Author))
-                                    {
-                                        <p class="small mb-2"><strong>Author:</strong> @article.Author</p>
-                                    }
+									@if (!string.IsNullOrWhiteSpace(article.Author))
+									{
+										<p class="small mb-2"><strong>Author:</strong> @article.Author</p>
+									}
 
-                                    <p class="card-text flex-grow-1">@article.Description</p>
+									<p class="card-text flex-grow-1">@article.Description</p>
 
-                                    <div class="mt-3">
-                                        <a asp-action="Read"
-                                           asp-route-url="@article.Url"
-                                           asp-route-title="@article.Title"
-                                           class="btn btn-primary"
-                                           target="_blank"
-                                           rel="noopener noreferrer">
-                                            Read Full Article
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+									<div class="mt-3">
+										<a asp-action="Read"
+											   asp-controller="News"
+											   asp-route-articleUrl="@article.Url"
+											   asp-route-articleTitle="@article.Title"
+											   class="btn btn-primary"
+											   target="_blank"
+											   rel="noopener noreferrer">
+											Read Full Article
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
 </div>

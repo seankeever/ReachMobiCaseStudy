@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using ReachMobiCaseStudy.Models;
 using ReachMobiCaseStudy.Services;
@@ -9,9 +11,7 @@ namespace ReachMobiCaseStudy.Controllers
         private readonly INewsApiService _newsApiService;
         private readonly ISessionArticleTracker _sessionArticleTracker;
 
-        public NewsController(
-            INewsApiService newsApiService,
-            ISessionArticleTracker sessionArticleTracker)
+        public NewsController(INewsApiService newsApiService, ISessionArticleTracker sessionArticleTracker)
         {
             _newsApiService = newsApiService;
             _sessionArticleTracker = sessionArticleTracker;
@@ -24,32 +24,50 @@ namespace ReachMobiCaseStudy.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Search(string? keyword, DateTime? fromDate, DateTime? toDate, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> Search(string? keyword, DateTime? fromDate, DateTime? toDate, string? exactPhrase, string? excludeWords, string? titleOnly, string? domains, string? excludeDomains, string? sortBy, int page = 1, int pageSize = 20)
         {
-            if (string.IsNullOrWhiteSpace(keyword))
+            var hasSearchInput =
+                !string.IsNullOrWhiteSpace(keyword) ||
+                !string.IsNullOrWhiteSpace(exactPhrase) ||
+                !string.IsNullOrWhiteSpace(titleOnly) ||
+                !string.IsNullOrWhiteSpace(domains);
+
+            if (!hasSearchInput)
             {
-                var model = new NewsSearchViewModel
+                var indexModel = new NewsSearchViewModel
                 {
                     Keyword = keyword,
                     FromDate = fromDate,
-                    ToDate = toDate
+                    ToDate = toDate,
+                    ExactPhrase = exactPhrase,
+                    ExcludeWords = excludeWords,
+                    TitleOnly = titleOnly,
+                    Domains = domains,
+                    ExcludeDomains = excludeDomains,
+                    SortBy = sortBy
                 };
 
-                ModelState.AddModelError(string.Empty, "Please enter a keyword. You can optionally add a date range.");
-                return View("Index", model);
+                ModelState.AddModelError(string.Empty, "Please enter a keyword or use one of the advanced search fields.");
+                return View("Index", indexModel);
             }
 
             if (fromDate.HasValue && toDate.HasValue && fromDate > toDate)
             {
-                var model = new NewsSearchViewModel
+                var indexModel = new NewsSearchViewModel
                 {
                     Keyword = keyword,
                     FromDate = fromDate,
-                    ToDate = toDate
+                    ToDate = toDate,
+                    ExactPhrase = exactPhrase,
+                    ExcludeWords = excludeWords,
+                    TitleOnly = titleOnly,
+                    Domains = domains,
+                    ExcludeDomains = excludeDomains,
+                    SortBy = sortBy
                 };
 
                 ModelState.AddModelError(string.Empty, "From Date cannot be after To Date.");
-                return View("Index", model);
+                return View("Index", indexModel);
             }
 
             page = page < 1 ? 1 : page;
@@ -63,44 +81,64 @@ namespace ReachMobiCaseStudy.Controllers
 
             try
             {
-                var resultsViewModel = await _newsApiService.SearchAsync(keyword, fromDate, toDate, page, pageSize);
+                var searchModel = new NewsSearchViewModel
+                {
+                    Keyword = keyword,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    ExactPhrase = exactPhrase,
+                    ExcludeWords = excludeWords,
+                    TitleOnly = titleOnly,
+                    Domains = domains,
+                    ExcludeDomains = excludeDomains,
+                    SortBy = string.IsNullOrWhiteSpace(sortBy) ? "publishedAt" : sortBy
+                };
+
+                var resultsViewModel = await _newsApiService.SearchAsync(searchModel, page, pageSize);
+
                 return View("Results", resultsViewModel);
             }
             catch (Exception ex)
             {
-                var model = new NewsSearchViewModel
+                var indexModel = new NewsSearchViewModel
                 {
                     Keyword = keyword,
                     FromDate = fromDate,
-                    ToDate = toDate
+                    ToDate = toDate,
+                    ExactPhrase = exactPhrase,
+                    ExcludeWords = excludeWords,
+                    TitleOnly = titleOnly,
+                    Domains = domains,
+                    ExcludeDomains = excludeDomains,
+                    SortBy = sortBy
                 };
 
                 if (ex.Message.Contains("parametersMissing", StringComparison.OrdinalIgnoreCase))
                 {
-                    model.ErrorMessage = "Please enter a keyword. The NewsAPI everything endpoint does not support a blank search.";
+                    indexModel.ErrorMessage = "Please enter a keyword. The NewsAPI everything endpoint does not support a blank search.";
                 }
                 else if (ex.Message.Contains("apiKeyInvalid", StringComparison.OrdinalIgnoreCase))
                 {
-                    model.ErrorMessage = "Your NewsAPI key appears to be invalid. Please check your configuration.";
+                    indexModel.ErrorMessage = "Your NewsAPI key appears to be invalid. Please check your configuration.";
                 }
                 else if (ex.Message.Contains("apiKeyMissing", StringComparison.OrdinalIgnoreCase))
                 {
-                    model.ErrorMessage = "Your NewsAPI key is missing from configuration.";
+                    indexModel.ErrorMessage = "Your NewsAPI key is missing from configuration.";
                 }
                 else if (ex.Message.Contains("rateLimited", StringComparison.OrdinalIgnoreCase))
                 {
-                    model.ErrorMessage = "The News API rate limit was reached. Please wait and try again.";
+                    indexModel.ErrorMessage = "The News API rate limit was reached. Please wait and try again.";
                 }
                 else if (ex.Message.Contains("requested too many result", StringComparison.OrdinalIgnoreCase))
                 {
-                    model.ErrorMessage = "You have requested too many results. Developer accounts are limited to a max of 100 results. You are trying to request results 100 to 120. Please upgrade to a paid plan if you need more results.";
+                    indexModel.ErrorMessage = "You have requested too many results. Developer accounts are limited to a max of 100 results. You are trying to request results 100 to 120. Please upgrade to a paid plan if you need more results.";
                 }
                 else
                 {
-                    model.ErrorMessage = "Unable to retrieve news articles right now. Please try again later.";
+                    indexModel.ErrorMessage = "Unable to retrieve news articles right now. Please try again later.";
                 }
 
-                return View("Index", model);
+                return View("Index", indexModel);
             }
         }
 
@@ -112,6 +150,12 @@ namespace ReachMobiCaseStudy.Controllers
                 keyword = model.Keyword,
                 fromDate = model.FromDate?.ToString("yyyy-MM-dd"),
                 toDate = model.ToDate?.ToString("yyyy-MM-dd"),
+                exactPhrase = model.ExactPhrase,
+                excludeWords = model.ExcludeWords,
+                titleOnly = model.TitleOnly,
+                domains = model.Domains,
+                excludeDomains = model.ExcludeDomains,
+                sortBy = model.SortBy,
                 page = 1,
                 pageSize = 20
             });

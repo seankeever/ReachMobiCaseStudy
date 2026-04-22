@@ -91,6 +91,10 @@ namespace ReachMobiCaseStudy.Controllers
                 {
                     model.ErrorMessage = "The News API rate limit was reached. Please wait and try again.";
                 }
+                else if (ex.Message.Contains("requested too many result", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.ErrorMessage = "You have requested too many results. Developer accounts are limited to a max of 100 results. You are trying to request results 100 to 120. Please upgrade to a paid plan if you need more results.";
+                }
                 else
                 {
                     model.ErrorMessage = "Unable to retrieve news articles right now. Please try again later.";

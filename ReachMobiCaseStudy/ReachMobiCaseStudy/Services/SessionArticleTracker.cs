@@ -8,12 +8,17 @@ public class SessionArticleTracker : ISessionArticleTracker
 {
     private const string SessionKey = "ArticleClickStats";
 
-    public void TrackClick(ISession session, string url, string? title)
+    public void TrackClick(ISession session, string? title, string url)
     {
-        var stats = GetStoredStats(session);
-        var existing = stats.FirstOrDefault(a => a.Url.Equals(url, StringComparison.OrdinalIgnoreCase));
+        var stats = GetStats(session).Articles;
 
-        if (existing is null)
+        var existing = stats.FirstOrDefault(x => x.Url == url);
+
+        if (existing != null)
+        {
+            existing.ClickCount++;
+        }
+        else
         {
             stats.Add(new ArticleClickItemViewModel
             {
@@ -21,14 +26,6 @@ public class SessionArticleTracker : ISessionArticleTracker
                 Title = string.IsNullOrWhiteSpace(title) ? url : title,
                 ClickCount = 1
             });
-        }
-        else
-        {
-            existing.ClickCount++;
-            if (string.IsNullOrWhiteSpace(existing.Title) && !string.IsNullOrWhiteSpace(title))
-            {
-                existing.Title = title;
-            }
         }
 
         SaveStats(session, stats);
